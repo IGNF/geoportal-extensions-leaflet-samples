@@ -131,15 +131,18 @@ function __getCodeJS() {
     var createMap = function () {
 
         // les options des couches
-        var layersOptions = ${layers};
+        var layersOptions = 
+            layers : ${layers}
+        };
 
         // les options de la vue
         var viewOptions = ${view};
 
+        var options = {};
+        L.Util.setOptions(options, layersOptions, viewOptions);
+        
         // la carte
-        var map = L.Map("map", {
-            layers : layersOptions
-        });
+        var map = L.Map("map", options);
 
         // les widgets
         ${data.widgets.isocurve.code}

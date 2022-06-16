@@ -18,7 +18,7 @@
             },
             "description": "The initial center for the view. If a user projection is not set, the coordinate system for the center is specified with the projection option.",
             "name": "options.center",
-            "defaultvalue": "[288074.8449901076, 6247982.515792289]",
+            "defaultvalue": "[48.9, 2.38]",
             "value": null,
             "section": false
         },
@@ -38,7 +38,7 @@
             },
             "description": "The projection. The default is Spherical Mercator.",
             "name": "options.crs",
-            "defaultvalue": "EPSG:3857",
+            "defaultvalue": null,
             "value": null,
             "section": false
         }

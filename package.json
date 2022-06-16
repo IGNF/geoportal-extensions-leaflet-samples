@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "file-saver": "^2.0.5",
-    "geoportal-extensions-leaflet": "2.1.8",
+    "geoportal-extensions-leaflet": "https://raw.githubusercontent.com/IGNF/geoportal-extensions/develop/build/scripts/release/geoportal-extensions-leaflet-2.2.4.tgz",
     "leaflet": "1.7.1"
   },
   "devDependencies": {

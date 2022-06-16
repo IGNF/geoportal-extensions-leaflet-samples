@@ -1,6 +1,6 @@
 // <!-- classe specifique à OpenLayers -->
 
-import { setOptions } from "./helper";
+import { setOptions, mergeDeep } from "./helper";
 import { config } from "./config";
 import { tpl } from "./template";
 
@@ -12,7 +12,7 @@ import {
     leafletExtVersion, 
     leafletExtDate,
     Services,
-    // Logger
+    Logger
 } from "geoportal-extensions-leaflet";
 
 import JsonElevationPath from "./data/leaflet-elevationpath.doclet.json";
@@ -26,20 +26,21 @@ import JsonSearchEngine from "./data/leaflet-searchengine.doclet.json";
 import JsonLView from "./data/l/leaflet-view.json";
 import JsonLLayer from "./data/l/leaflet-layer.json";
 
-// FIXME le gestion des loggers des API Leaflet n'est pas exposée dans le bundle !?
-// const isProduction = process.env.NODE_ENV === 'production';
-// isProduction ? Logger.disableAll() : Logger.enableAll();
+const isProduction = process.env.NODE_ENV === 'production';
+isProduction ? Logger.disableAll() : Logger.enableAll();
 
 // gestion du path de deploiement
 // const publicPath = process.env.BASE_URL;
 
 var map = null;
+var container = null;
 
 /** suppression  de la carte */
 export function removeMap() {
     if (map != null) {
         map.remove();
         map = null;
+        // container.remove();
     }
 }
 
@@ -51,7 +52,9 @@ export function addMap(options, status) {
         tpl.clear();
 
         // traitements des layers
-        var layersOptions = [];
+        var layersOptions = {
+            layers : []
+        };
 
         options.l.layer.params.forEach(element => {
             if (element.section) {
@@ -61,20 +64,20 @@ export function addMap(options, status) {
                 return;
             }
             if (element.service.toLowerCase() === "tile") {
-                layersOptions.push(LExtended.geoportalLayer.WMTS({
+                layersOptions.layers.push(LExtended.geoportalLayer.WMTS({
                     layer : element.name
                 }));
                 tpl.addLayer("tile", element.name);
             }
             if (element.service.toLowerCase() === "image") {
-                layersOptions.push(LExtended.geoportalLayer.WMS({
+                layersOptions.layers.push(LExtended.geoportalLayer.WMS({
                     layer : element.name
                 }));
                 tpl.addLayer("image", element.name);
             }
             /* 
             if (element.service.toLowerCase() === "vector.kml") {
-                layersOptions.push(new VectorLayer({
+                layersOptions.layers.push(new VectorLayer({
                         source: new VectorSource({
                             url: publicPath + element.name,
                             format: new KML()
@@ -83,7 +86,7 @@ export function addMap(options, status) {
                 tpl.addLayer("vector.kml", element.name);
             }
             if (element.service.toLowerCase() === "vector.gpx") {
-                layersOptions.push(new VectorLayer({
+                layersOptions.layers.push(new VectorLayer({
                         source: new VectorSource({
                             url: publicPath + element.name,
                             format: new GPX()
@@ -92,7 +95,7 @@ export function addMap(options, status) {
                 tpl.addLayer("vector.gpx", element.name);
             }
             if (element.service.toLowerCase() === "vector.geojson") {
-                layersOptions.push(new VectorLayer({
+                layersOptions.layers.push(new VectorLayer({
                         source: new VectorSource({
                             url: publicPath + element.name,
                             format: new GeoJSON()
@@ -101,7 +104,7 @@ export function addMap(options, status) {
                 tpl.addLayer("vector.geojson", element.name);
             }
             if (element.service.toLowerCase() === "vectortile") {
-                layersOptions.push(
+                layersOptions.layers.push(
                     // EVOL ol v6 !
                     // cf. https://openlayers.org/en/latest/apidoc/module-ol_layer_MapboxVector.html
                     // new MapboxVector({
@@ -112,14 +115,23 @@ export function addMap(options, status) {
             */
         });
 
-        map = L.map("map", {
-            layers: layersOptions,
-            center: [48.9, 2],
-            zoom: 13
-        });
+        // options de la carte
+        var mapOptions = {};
+        mergeDeep(mapOptions, layersOptions, setOptions(options.l.view));
+
+        // container
+        var containerMain = document.getElementById("mapContainer");
+        container = containerMain.firstChild;
+        // if (! container) {
+        //     container = document.createElement("div");
+        //     container.className = "map";
+        //     container.id = "map";
+        //     containerMain.appendChild(container);
+        // }
+        map = L.map(container, mapOptions);
 
         // TODO les options de la carte sous Leaflet
-        // tpl.addView(setOptions(options.leaflet.view));
+        tpl.addView(setOptions(options.l.view));
 
         var opts;
         if (status.isocurve) {
