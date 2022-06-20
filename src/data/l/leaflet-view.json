@@ -28,13 +28,13 @@
             },
             "description": "Zoom level used to calculate the initial resolution for the view.",
             "name": "options.zoom",
-            "defaultvalue": 16,
+            "defaultvalue": 6,
             "value": null,
             "section": false
         },
         {
             "type": {
-                "names": ["String"]
+                "names": ["Object"]
             },
             "description": "The projection. The default is Spherical Mercator.",
             "name": "options.crs",

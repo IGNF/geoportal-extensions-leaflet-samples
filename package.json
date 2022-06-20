@@ -10,8 +10,9 @@
     "storybook": "start-storybook -p 6006 -s src/assets/"
   },
   "dependencies": {
+    "@mapbox/leaflet-omnivore": "^0.3.4",
     "file-saver": "^2.0.5",
-    "geoportal-extensions-leaflet": "https://raw.githubusercontent.com/IGNF/geoportal-extensions/develop/build/scripts/release/geoportal-extensions-leaflet-2.2.4.tgz",
+    "geoportal-extensions-leaflet": "file://../geoportal-extensions-feature/build/scripts/release/geoportal-extensions-leaflet-2.2.4.tgz",
     "leaflet": "1.7.1"
   },
   "devDependencies": {

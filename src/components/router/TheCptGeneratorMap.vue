@@ -199,6 +199,11 @@ export default {
             var blob = new Blob([tpl.getCodeHTML()], {type: "text/plain;charset=utf-8"});
             saveAs(blob, "index.html");
 
+            var res = tpl.getResources();
+            res.forEach(element => {
+                saveAs(element.url, element.file);
+            });
+
         },
         onClickReset() {
             // TODO reinit les options par defaut

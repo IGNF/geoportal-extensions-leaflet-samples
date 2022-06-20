@@ -21,6 +21,15 @@ Exemples d'utilisation de l'API des extensions du Géoportail (geoportal-extensi
 * `npm run serve`
 * Visit your app at [http://localhost:8085](http://localhost:8085).
 
+You can link your developpment library into the *package.json*
+
+Ex.
+```json
+"dependencies": {
+    "geoportal-extensions-leaflet": "https://raw.githubusercontent.com/IGNF/geoportal-extensions/develop/build/scripts/release/geoportal-extensions-leaflet-2.2.4.tgz",
+}
+```
+
 ### Linting
 
 * `npm run lint`

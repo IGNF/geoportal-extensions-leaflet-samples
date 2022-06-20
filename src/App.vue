@@ -8,7 +8,7 @@
             <div class="header-library">
                 <div class="header-p">
                     <a :href="url">
-                        <img src="./assets/logo-leaflet.png" alt="Leaflet" width="50" height="50">
+                        <img src="./assets/logo-leaflet.png" alt="Leaflet" width="100" height="50">
                     </a>
                 </div>
                 <div class="header-p">Accès à la bibliothèque des <a :href="source">extensions Geoportail</a></div>

@@ -1,11 +1,13 @@
 // <!-- classe specifique à OpenLayers -->
 
-import { setOptions, mergeDeep } from "./helper";
+import { setOptions } from "./helper";
 import { config } from "./config";
 import { tpl } from "./template";
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+import omnivore from "@mapbox/leaflet-omnivore";
 
 import {
     LExtended, 
@@ -30,17 +32,20 @@ const isProduction = process.env.NODE_ENV === 'production';
 isProduction ? Logger.disableAll() : Logger.enableAll();
 
 // gestion du path de deploiement
-// const publicPath = process.env.BASE_URL;
+const publicPath = process.env.BASE_URL;
 
-var map = null;
-var container = null;
+var m_map = null;
+var m_container = null;
 
 /** suppression  de la carte */
 export function removeMap() {
-    if (map != null) {
-        map.remove();
-        map = null;
-        // container.remove();
+    if (m_map != null) {
+        m_map.remove();
+        m_map = null;
+        // if (m_container) {
+        //     m_container.remove();
+        //     m_container = null;
+        // }
     }
 }
 
@@ -51,11 +56,25 @@ export function addMap(options, status) {
     var createMap = function () {
         tpl.clear();
 
-        // traitements des layers
-        var layersOptions = {
-            layers : []
-        };
+        // container
+        var containerMain = document.getElementById("mapContainer");
+        m_container = containerMain.firstChild;
+        // FIXME map container is being reused by another instance
+        // if (! m_container) {
+        //     m_container = document.createElement("div");
+        //     m_container.className = "map";
+        //     m_container.id = "map";
+        //     containerMain.appendChild(container);
+        // }
 
+        // options de la carte
+        var mapOptions = setOptions(options.l.view);
+        tpl.addView(setOptions(options.l.view));
+
+        // creation de la carte
+        m_map = L.map(m_container, mapOptions);
+
+        // traitements des layers
         options.l.layer.params.forEach(element => {
             if (element.section) {
                 return;
@@ -64,116 +83,92 @@ export function addMap(options, status) {
                 return;
             }
             if (element.service.toLowerCase() === "tile") {
-                layersOptions.layers.push(LExtended.geoportalLayer.WMTS({
+                var wmts = LExtended.geoportalLayer.WMTS({
                     layer : element.name
-                }));
+                });
                 tpl.addLayer("tile", element.name);
+                m_map.addLayer(wmts);
             }
             if (element.service.toLowerCase() === "image") {
-                layersOptions.layers.push(LExtended.geoportalLayer.WMS({
+                var wms = LExtended.geoportalLayer.WMS({
                     layer : element.name
-                }));
+                });
                 tpl.addLayer("image", element.name);
+                m_map.addLayer(wms);
             }
-            /* 
             if (element.service.toLowerCase() === "vector.kml") {
-                layersOptions.layers.push(new VectorLayer({
-                        source: new VectorSource({
-                            url: publicPath + element.name,
-                            format: new KML()
-                        })
-                }));
+                var urlKml = publicPath + element.name;
+                omnivore.kml(urlKml)
+                .on('ready', function() {})
+                .on('error', function() {})
+                .addTo(m_map);
                 tpl.addLayer("vector.kml", element.name);
             }
             if (element.service.toLowerCase() === "vector.gpx") {
-                layersOptions.layers.push(new VectorLayer({
-                        source: new VectorSource({
-                            url: publicPath + element.name,
-                            format: new GPX()
-                        })
-                }));
+                var urlGpx = publicPath + element.name;
+                omnivore.gpx(urlGpx)
+                .on('ready', function() {})
+                .on('error', function() {})
+                .addTo(m_map);
                 tpl.addLayer("vector.gpx", element.name);
             }
             if (element.service.toLowerCase() === "vector.geojson") {
-                layersOptions.layers.push(new VectorLayer({
-                        source: new VectorSource({
-                            url: publicPath + element.name,
-                            format: new GeoJSON()
-                        })
-                }));
+                var urlJson = publicPath + element.name;
+                omnivore.geojson(urlJson)
+                .on('ready', function() {})
+                .on('error', function() {})
+                .addTo(m_map);
                 tpl.addLayer("vector.geojson", element.name);
             }
+            /*
             if (element.service.toLowerCase() === "vectortile") {
-                layersOptions.layers.push(
-                    // EVOL ol v6 !
-                    // cf. https://openlayers.org/en/latest/apidoc/module-ol_layer_MapboxVector.html
-                    // new MapboxVector({
-                    //     styleUrl: publicPath + '',
-                    // })
-                );
+                layersOptions.layers.push();
             } 
             */
         });
 
-        // options de la carte
-        var mapOptions = {};
-        mergeDeep(mapOptions, layersOptions, setOptions(options.l.view));
-
-        // container
-        var containerMain = document.getElementById("mapContainer");
-        container = containerMain.firstChild;
-        // if (! container) {
-        //     container = document.createElement("div");
-        //     container.className = "map";
-        //     container.id = "map";
-        //     containerMain.appendChild(container);
-        // }
-        map = L.map(container, mapOptions);
-
-        // TODO les options de la carte sous Leaflet
-        tpl.addView(setOptions(options.l.view));
-
+        // traitements des widgets
         var opts;
         if (status.isocurve) {
             opts = setOptions(options.isocurve);
             var iso = new LExtended.geoportalControl.Isocurve(opts);
-            map.addControl(iso);
+            m_map.addControl(iso);
             tpl.addWidget("isocurve", opts);
         }
         if (status.layerswitcher) {
             opts = setOptions(options.layerswitcher);
-            var layerSwitcher = new LExtended.geoportalControl.LayerSwitcher(opts);
-            map.addControl(layerSwitcher);
+            var layerswitcher = new LExtended.geoportalControl.LayerSwitcher(opts);
+            m_map.addControl(layerswitcher);
             tpl.addWidget("layerswitcher", opts);
         }
         if (status.mouseposition) {
             opts = setOptions(options.mouseposition);
             var mp = new LExtended.geoportalControl.MousePosition(opts);
-            map.addControl(mp);
+            m_map.addControl(mp);
             tpl.addWidget("mouseposition", opts);
         }
         if (status.route) {
             opts = setOptions(options.route);
             var route = new LExtended.geoportalControl.Route(opts);
-            map.addControl(route);
+            m_map.addControl(route);
             tpl.addWidget("route", opts);
         }
         if (status.reversegeocode) {
             opts = setOptions(options.reversegeocode);
             var reverse = new LExtended.geoportalControl.ReverseGeocode(opts);
-            map.addControl(reverse);
+            m_map.addControl(reverse);
             tpl.addWidget("reversegeocode", opts);
         }
         if (status.searchengine) {
             opts = setOptions(options.searchengine);
             var search = new LExtended.geoportalControl.SearchEngine(opts);
-            map.addControl(search);
+            m_map.addControl(search);
             tpl.addWidget("searchengine", opts);
         }
         if (status.elevationpath) {
             opts = setOptions(options.elevationpath);
             var measureProfil = new LExtended.geoportalControl.ElevationPath(opts);
-            map.addControl(measureProfil);
+            m_map.addControl(measureProfil);
             tpl.addWidget("elevationpath", opts);
         }
     };

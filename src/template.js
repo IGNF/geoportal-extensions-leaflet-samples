@@ -2,7 +2,8 @@
 // ES6 notation
 // https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Template_literals
 import {
-    commaLists,
+    /* commaLists, */
+    /* stripIndent, */
     stripIndents,
     html
 } from 'common-tags';
@@ -42,10 +43,17 @@ var data = {
         },
         elevationpath: {
             code: "",
-            class: "ElavationPath"
+            class: "ElevationPath"
         }
-    }
+    },
+    res : []
 };
+
+// const indentString = (str, count, indent = ' ') => {
+//     if (count >= 0) {
+//         str.replace(/^/gm, indent.repeat(count));
+//     }
+// }
 
 /**
  * clear data
@@ -53,6 +61,7 @@ var data = {
 function __clear() {
     data.layers = [];
     data.view = "";
+    data.res = [];
     for (const key in data.widgets) {
         if (Object.hasOwnProperty.call(data.widgets, key)) {
             const el = data.widgets[key];
@@ -74,17 +83,55 @@ function __addLayer(type, name) {
             data.layers.push(`
                 L.geoportalLayer.WMTS({
                     layer : "${name}"
-                })`);
+                }).addTo(map);
+            `);
             break;
         case "image":
             data.layers.push(`
                 L.geoportalLayer.WMS({
                     layer : "${name}"
-                })`);
+                }).addTo(map);
+            `);
             break;
         case "vector.kml":
+            var fileKml = name.substring(name.lastIndexOf('/')+1);
+            data.layers.push(`
+                omnivore.kml("${fileKml}")
+                    .on('ready', function() {})
+                    .on('error', function() {})
+                .addTo(map);
+            `);
+            data.res.push({
+                file : fileKml,
+                url : name
+            });
+            break;
         case "vector.gpx":
+            var fileGpx = name.substring(name.lastIndexOf('/')+1);
+            data.layers.push(`
+                omnivore.gpx("${fileGpx}")
+                    .on('ready', function() {})
+                    .on('error', function() {})
+                .addTo(map);
+            `);
+            data.res.push({
+                file : fileGpx,
+                url : name
+            });
+            break;
         case "vector.geojson":
+            var fileJson = name.substring(name.lastIndexOf('/')+1);
+            data.layers.push(`
+                omnivore.geojson("${fileJson}")
+                    .on('ready', function() {})
+                    .on('error', function() {})
+                .addTo(map);
+            `);
+            data.res.push({
+                file : fileJson,
+                url : name
+            });
+            break;
         case "vectortile":
         default:
             break;
@@ -121,28 +168,22 @@ function __addWidget(name, option) {
  * @returns {String}
  */
 function __getCodeJS() {
-    var layers = commaLists `[${data.layers}]`;
+    var strLayers = "";
+    data.layers.forEach(l => {
+        strLayers = strLayers.concat(l);
+    });
+
+    var layers = `${strLayers}`;
     var view = stripIndents `${data.view}`;
 
     return `
-    var self = this;
-
-    // Creation de la carte
-    var createMap = function () {
-
-        // les options des couches
-        var layersOptions = 
-            layers : ${layers}
-        };
-
-        // les options de la vue
-        var viewOptions = ${view};
-
-        var options = {};
-        L.Util.setOptions(options, layersOptions, viewOptions);
+    window.onload = function () {
         
         // la carte
-        var map = L.Map("map", options);
+        var map = L.map("map", ${view});
+
+        // les couches
+        ${layers}
 
         // les widgets
         ${data.widgets.isocurve.code}
@@ -153,13 +194,6 @@ function __getCodeJS() {
         ${data.widgets.searchengine.code}
         ${data.widgets.elevationpath.code}
     };
-
-    // Appel autoconf
-    Gp.Services.getConfig({
-        apiKey : "${data.apiKey}",
-        protocol : "XHR",
-        onSuccess : createMap
-    });
     `;
 }
 
@@ -172,14 +206,18 @@ function __getCodeHTML() {
         js: __getCodeJS(),
         css: __getCodeCSS()
     };
-    var lib = {
-        js: config.project.library.dist.js,
-        css: config.project.library.dist.css
-    };
-    var plugin = {
-        css: config.project.library.plugin.css,
-        js: config.project.library.plugin.js
-    }
+
+    var otherJs = "";
+    var otherCss = "";
+    var others = config.project.library.others;
+    others.forEach(el => {
+        if (el.js) {
+            otherJs = otherJs.concat("<script src=\"", el.js, "\"></script>");
+        }
+        if (el.css) {
+            otherCss = otherCss.concat("<link rel=\"stylesheet\" href=\"", el.css, "\" />");
+        }
+    });
 
     return html `
     <!DOCTYPE html>
@@ -189,12 +227,14 @@ function __getCodeHTML() {
             <meta charset="UTF-8">
 
             <!-- Library -->
-            <link rel="stylesheet" href="${lib.css}" />
-            <script src="${lib.js}"></script>
+            <link rel="stylesheet" href="${config.project.library.dist.css}" />
+            <script src="${config.project.library.dist.js}"></script>
+            ${otherJs}
+            ${otherCss}
 
             <!-- Plugin IGN -->
-            <link rel="stylesheet" href="${plugin.css}" />
-            <script src="${plugin.js}"></script>
+            <link rel="stylesheet" href="${config.project.library.plugin.css}" />
+            <script src="${config.project.library.plugin.js}" data-key="${data.apiKey}"></script>
 
             <style>
             ${code.css}
@@ -222,10 +262,15 @@ function __getCodeHTML() {
  */
 function __getCodeCSS() {
     return `
-    #map:{
+    #map {
         height: 400px;
+        width: 100%;
     }
     `;
+}
+
+function __getResources() {
+    return data.res;
 }
 
 export var tpl = {
@@ -235,5 +280,6 @@ export var tpl = {
     addWidget: __addWidget,
     getCodeJS: __getCodeJS,
     getCodeHTML: __getCodeHTML,
-    getCodeCSS: __getCodeCSS
+    getCodeCSS: __getCodeCSS,
+    getResources : __getResources
 };

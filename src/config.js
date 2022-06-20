@@ -21,7 +21,11 @@ var project = {
         plugin: {
             js: "https://ignf.github.io/geoportal-extensions/leaflet-latest/dist/GpPluginLeaflet.js",
             css: "https://ignf.github.io/geoportal-extensions/leaflet-latest/dist/GpPluginLeaflet.css"
-        }
+        },
+        others: [{
+            js: "https://cdn.jsdelivr.net/npm/@mapbox/leaflet-omnivore@0.3.4/leaflet-omnivore.js",
+            css: ""
+        }]
     }
 };
 
