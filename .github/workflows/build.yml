@@ -31,7 +31,6 @@ jobs:
           path: dist
 
   deploy:
-    if: false
     runs-on: ubuntu-latest
     needs: build
     steps:
