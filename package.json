@@ -16,7 +16,7 @@
   "dependencies": {
     "@mapbox/leaflet-omnivore": "^0.3.4",
     "file-saver": "^2.0.5",
-    "geoportal-extensions-leaflet": "2.3.3",
+    "geoportal-extensions-leaflet": "2.3.4",
     "leaflet": "1.7.1"
   },
   "devDependencies": {
